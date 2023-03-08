@@ -6,16 +6,18 @@ const Sentry = require("@sentry/node");
 const Tracing = require("@sentry/tracing");
 const pdf = require('./pdf.js');
 
-const sentryDSN = process.env.SENTRY_DSN || null;
+const sentryDSN = process.env.BAKSO_SENTRY_DSN || null;
 
-Sentry.init({
-  dsn: sentryDSN,
-  tracesSampleRate: 1.0,
-});
+if( sentryDSN ){
+  Sentry.init({
+    dsn: sentryDSN,
+    tracesSampleRate: 1.0,
+  });
+}
 
 // Serve on PORT on Heroku and on localhost:5000 locally
 const PORT = process.env.PORT || '5500';
-const KEY = process.env.SECRET_KEY || 'hello world';
+const KEY = process.env.BAKSO_SECRET_KEY || 'hello world';
 
 const app = express();
 app.use(express.json())

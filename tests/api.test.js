@@ -22,8 +22,6 @@ describe('testing-pdf-generation', () => {
   it('POST /download/pdf - success', async () => {
     const inputs = {
       key: 'blah',
-      // "hookUrl":"http://localhost:3000/hello",
-      // "priority":1,
       pdfParams: {
         name: 'myfile',
         renderUrl: 'https://example.com',
@@ -34,7 +32,6 @@ describe('testing-pdf-generation', () => {
         pdfOptions: {
           width: '8.5in',
           height: '11in',
-          format: null,
           printBackground: true,
         },
       },
@@ -54,5 +51,18 @@ describe('testing-pdf-generation', () => {
       console.error('Error loading PDF:', e);
       throw e;
     }
+  });
+
+  it('POST /download/pdf - 400 bad params', async () => {
+    const inputs = {
+      foo: 'blah',
+    };
+
+    const result = await request(app)
+      .post('/download/pdf')
+      .send(inputs)
+      .set('Accept', 'application/json');
+
+    expect(result.status).toEqual(400);
   });
 });

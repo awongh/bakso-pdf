@@ -1,4 +1,5 @@
 const express = require('express');
+require('express-async-errors');
 const serverRoutes = require('../src/router');
 const request = require('supertest');
 
@@ -11,6 +12,16 @@ const PDFJS = require('pdfjs-dist');
 const app = express();
 app.use(express.json());
 app.use(serverRoutes);
+
+
+/* ========================================
+ * ========================================
+ *
+ * start tests
+ *
+ * ========================================
+ * ========================================
+ */
 describe('testing-healthcheck', () => {
   it('GET /healthcheck - success', async () => {
     const { text } = await request(app).get('/healthcheck');

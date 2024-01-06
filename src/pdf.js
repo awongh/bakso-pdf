@@ -50,16 +50,17 @@ function timeoutAndReject(timeout, message) {
 }
 
 async function checkPageHTML(url) {
-  const res = await axios(url, {
-    method: 'HEAD',
+
+  const res = await fetch(url, {
+    method: 'HEAD', // Change the method to 'HEAD'
   });
 
-  // throw if: no headers, bad content type
   if (
+    !res.ok ||
     !res.headers ||
-    (res.status == 200 && !/text\/html/i.test(res.headers['content-type']))
+    (res.status == 200 && !/text\/html/i.test(res.headers.get('content-type')))
   ) {
-    throw new Error();
+    throw new Error('HTTP check page HTML error');
   }
 
   return res;

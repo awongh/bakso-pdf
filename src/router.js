@@ -3,6 +3,7 @@ const retry = require('async-retry');
 // const crypto = require('crypto');
 const pdf = require('./pdf.js');
 const { baksoParamsSchema } = require('./schemas');
+const authenticateToken = require('./auth');
 
 const Ajv = require('ajv');
 const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
@@ -15,7 +16,7 @@ router.get('/healthcheck', (req, res) => {
   res.send('hello');
 });
 
-router.post('/download/pdf', async (req, res) => {
+router.post('/download/pdf', authenticateToken, async (req, res) => {
   const validate = ajv.compile(baksoParamsSchema);
   const valid = validate(req.body.pdfParams);
   if (!valid) {

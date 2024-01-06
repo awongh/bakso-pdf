@@ -4,72 +4,76 @@ const { DEBUG, HEADFUL, CHROME_BIN, PORT } = process.env;
 const PDF_TIMEOUT = process.env.PDF_TIMEOUT || 1000000;
 const PAGE_TIMEOUT = process.env.PAGE_TIMEOUT || 1000000;
 
-const puppeteer = require('puppeteer');
-const axios = require('axios').default;
+const puppeteer = require("puppeteer");
+const axios = require("axios").default;
 
-const truncate = (str, len) => str.length > len ? str.slice(0, len) + '…' : str;
+const truncate = (str, len) =>
+  str.length > len ? str.slice(0, len) + "…" : str;
 
 const puppeteerConfig = {
-  headless:true,
+  headless: true,
   ignoreHTTPSErrors: true,
   args: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--enable-features=NetworkService',
-    '-—disable-dev-tools',
-    '--headless',
-    '--disable-gpu',
-    '--full-memory-crash-report',
-    '--unlimited-storage',
-    '--disable-setuid-sandbox',
-    '--disable-dev-shm-usage',
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--enable-features=NetworkService",
+    "-—disable-dev-tools",
+    "--headless",
+    "--disable-gpu",
+    "--full-memory-crash-report",
+    "--unlimited-storage",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
 
     // from: https://stackoverflow.com/a/66994528/271932
-    '--no-first-run',
-    '--no-zygote',
-    '--deterministic-fetch',
-    '--disable-features=IsolateOrigins',
-    '--disable-site-isolation-trials',
-
+    "--no-first-run",
+    "--no-zygote",
+    "--deterministic-fetch",
+    "--disable-features=IsolateOrigins",
+    "--disable-site-isolation-trials",
   ],
   devtools: false,
 };
 
-function testUrl(url){
+function testUrl(url) {
   if (!/^https?:\/\//i.test(url)) {
-    throw new Error('Invalid URL');
+    throw new Error("Invalid URL");
   }
 }
 
-function timeoutAndReject(timeout,message) {
-  return new Promise(function(resolve, reject) {
-    setTimeout(function() {
-      reject(message)
-    }, timeout)
-  })
+function timeoutAndReject(timeout, message) {
+  return new Promise(function (resolve, reject) {
+    setTimeout(function () {
+      reject(message);
+    }, timeout);
+  });
 }
 
-async function checkPageHTML(url){
-
+async function checkPageHTML(url) {
   const res = await axios(url, {
-    method: 'HEAD'
+    method: "HEAD",
   });
 
   // throw if: no headers, bad content type
-  if (!res.headers || (res.status == 200 && !/text\/html/i.test(res.headers['content-type']))){
-
+  if (
+    !res.headers ||
+    (res.status == 200 && !/text\/html/i.test(res.headers["content-type"]))
+  ) {
     throw new Error();
   }
 
   return res;
-};
+}
 
-module.exports = async function pdf({renderUrl, pageOptions, pdfOptions, name}){
-
+module.exports = async function pdf({
+  renderUrl,
+  pageOptions,
+  pdfOptions,
+  name,
+}) {
   let browser, page;
 
-  try{
-
+  try {
     console.log(renderUrl);
     testUrl(renderUrl);
 
@@ -79,7 +83,7 @@ module.exports = async function pdf({renderUrl, pageOptions, pdfOptions, name}){
 
     if (HEADFUL) {
       config.headless = false;
-      config.args.push('--auto-open-devtools-for-tabs');
+      config.args.push("--auto-open-devtools-for-tabs");
     }
 
     if (CHROME_BIN) config.executablePath = CHROME_BIN;
@@ -93,13 +97,13 @@ module.exports = async function pdf({renderUrl, pageOptions, pdfOptions, name}){
 
     await page.setRequestInterception(true);
 
-    page.on('request', (request) => {
+    page.on("request", (request) => {
       const url = request.url();
       const method = request.method();
       const resourceType = request.resourceType();
 
       // Skip data URIs
-      if (/^data:/i.test(url)){
+      if (/^data:/i.test(url)) {
         request.continue();
         return;
       }
@@ -109,10 +113,10 @@ module.exports = async function pdf({renderUrl, pageOptions, pdfOptions, name}){
       const otherResources = /^(manifest|other)$/i.test(resourceType);
       // Abort requests that exceeds 15 seconds
       // Also abort if more than 100 requests
-      if (seconds > 15 || reqCount > 100 || actionDone){
+      if (seconds > 15 || reqCount > 100 || actionDone) {
         console.log(`❌⏳ ${method} ${shortURL}`);
         request.abort();
-      } else if (otherResources){
+      } else if (otherResources) {
         console.log(`❌ ${method} ${shortURL}`);
         request.abort();
       } else {
@@ -127,71 +131,80 @@ module.exports = async function pdf({renderUrl, pageOptions, pdfOptions, name}){
       responseReject = reject;
     });
 
-
-    page.on('response', (resp) => {
-
-      let headers = resp._headers;
+    page.on("response", (resp) => {
+      const headers = resp._headers;
       const renderTestUrl = new URL(renderUrl);
-      if (resp && resp._status !== undefined && ( resp._status === 201 || resp._status === 301 || resp._status === 302 || resp._status === 303 || resp._status === 307 || resp._status === 308 ) && headers && headers['location'] !== undefined && headers['location'].includes(renderTestUrl.hostname)){
-
-          //responseReject(new Error(`Possible infinite redirects detected: ${headers['location']} ${resp._status}`));
-          console.log(`Possible infinite redirects detected: ${headers['location']} ${resp._status}`);
-
-      }else if (resp && resp._status !== undefined && resp._status !== 200 ){
-        responseReject(new Error('Status not 200.'));
+      if (
+        resp &&
+        resp._status !== undefined &&
+        (resp._status === 201 ||
+          resp._status === 301 ||
+          resp._status === 302 ||
+          resp._status === 303 ||
+          resp._status === 307 ||
+          resp._status === 308) &&
+        headers &&
+        headers.location !== undefined &&
+        headers.location.includes(renderTestUrl.hostname)
+      ) {
+        // responseReject(new Error(`Possible infinite redirects detected: ${headers['location']} ${resp._status}`));
+        console.log(
+          `Possible infinite redirects detected: ${headers.location} ${resp._status}`
+        );
+      } else if (resp && resp._status !== undefined && resp._status !== 200) {
+        responseReject(new Error("Status not 200."));
       }
     });
 
     await page.setViewport({
-      width:pageOptions.width,
-      height:pageOptions.height,
+      width: pageOptions.width,
+      height: pageOptions.height,
     });
 
     await Promise.race([
       responsePromise,
       page.goto(renderUrl, {
-        waitUntil: 'networkidle2',
-        timeout: PAGE_TIMEOUT
-      })
+        waitUntil: "networkidle2",
+        timeout: PAGE_TIMEOUT,
+      }),
     ]);
 
     // Pause all media and stop buffering
     page.frames().forEach((frame) => {
       frame.evaluate(() => {
-        document.querySelectorAll('video, audio').forEach(m => {
+        document.querySelectorAll("video, audio").forEach((m) => {
           if (!m) return;
           if (m.pause) m.pause();
-          m.preload = 'none';
+          m.preload = "none";
         });
       });
     });
 
     // wait to render pdf
     const pdf = await Promise.race([
-      timeoutAndReject(PDF_TIMEOUT, 'PDF timed out'),
-      page.pdf(pdfOptions)
+      timeoutAndReject(PDF_TIMEOUT, "PDF timed out"),
+      page.pdf(pdfOptions),
     ]);
 
     actionDone = true;
 
-    if (browser){
+    if (browser) {
       await browser.close();
     }
 
     return pdf;
-
   } catch (e) {
-    console.error(e)
+    console.error(e);
 
     if (!DEBUG && page) {
       await page.removeAllListeners();
       await page.close();
     }
-    const { message = '' } = e;
+    const { message = "" } = e;
 
     // Handle websocket not opened error
-    if (/not opened/i.test(message) && browser){
-      console.error('🕸 Web socket failed');
+    if (/not opened/i.test(message) && browser) {
+      console.error("🕸 Web socket failed");
       try {
         await browser.close();
         browser = null;
@@ -201,7 +214,7 @@ module.exports = async function pdf({renderUrl, pageOptions, pdfOptions, name}){
       }
     }
 
-    if (browser){
+    if (browser) {
       await browser.close();
       browser = null;
     }

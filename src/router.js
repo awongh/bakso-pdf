@@ -16,7 +16,6 @@ if (sentryDSN) {
   });
 }
 
-// Serve on PORT on Heroku and on localhost:5000 locally
 const PORT = process.env.PORT || '5003';
 const KEY = process.env.BAKSO_SECRET_KEY || 'hello';
 
@@ -24,7 +23,7 @@ router.get('/healthcheck', (req, res) => {
   res.send('hello');
 });
 
-router.post('/download', async (req, res) => {
+router.post('/download/pdf', async (req, res) => {
   try {
     // exit out if key doesn't match
 

@@ -4,40 +4,40 @@ const { DEBUG, HEADFUL, CHROME_BIN, PORT } = process.env;
 const PDF_TIMEOUT = process.env.PDF_TIMEOUT || 1000000;
 const PAGE_TIMEOUT = process.env.PAGE_TIMEOUT || 1000000;
 
-const puppeteer = require("puppeteer");
-const axios = require("axios").default;
+const puppeteer = require('puppeteer');
+const axios = require('axios').default;
 
 const truncate = (str, len) =>
-  str.length > len ? str.slice(0, len) + "…" : str;
+  str.length > len ? str.slice(0, len) + '…' : str;
 
 const puppeteerConfig = {
   headless: true,
   ignoreHTTPSErrors: true,
   args: [
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--enable-features=NetworkService",
-    "-—disable-dev-tools",
-    "--headless",
-    "--disable-gpu",
-    "--full-memory-crash-report",
-    "--unlimited-storage",
-    "--disable-setuid-sandbox",
-    "--disable-dev-shm-usage",
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--enable-features=NetworkService',
+    '-—disable-dev-tools',
+    '--headless',
+    '--disable-gpu',
+    '--full-memory-crash-report',
+    '--unlimited-storage',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
 
     // from: https://stackoverflow.com/a/66994528/271932
-    "--no-first-run",
-    "--no-zygote",
-    "--deterministic-fetch",
-    "--disable-features=IsolateOrigins",
-    "--disable-site-isolation-trials",
+    '--no-first-run',
+    '--no-zygote',
+    '--deterministic-fetch',
+    '--disable-features=IsolateOrigins',
+    '--disable-site-isolation-trials',
   ],
   devtools: false,
 };
 
 function testUrl(url) {
   if (!/^https?:\/\//i.test(url)) {
-    throw new Error("Invalid URL");
+    throw new Error('Invalid URL');
   }
 }
 
@@ -51,13 +51,13 @@ function timeoutAndReject(timeout, message) {
 
 async function checkPageHTML(url) {
   const res = await axios(url, {
-    method: "HEAD",
+    method: 'HEAD',
   });
 
   // throw if: no headers, bad content type
   if (
     !res.headers ||
-    (res.status == 200 && !/text\/html/i.test(res.headers["content-type"]))
+    (res.status == 200 && !/text\/html/i.test(res.headers['content-type']))
   ) {
     throw new Error();
   }
@@ -82,11 +82,11 @@ module.exports = async function pdf({
     if (DEBUG) puppeteerConfig.dumpio = true;
 
     if (HEADFUL) {
-      config.headless = false;
-      config.args.push("--auto-open-devtools-for-tabs");
+      puppeteerConfig.headless = false;
+      puppeteerConfig.args.push('--auto-open-devtools-for-tabs');
     }
 
-    if (CHROME_BIN) config.executablePath = CHROME_BIN;
+    if (CHROME_BIN) puppeteerConfig.executablePath = CHROME_BIN;
 
     browser = await puppeteer.launch(puppeteerConfig);
     page = await browser.newPage();
@@ -97,7 +97,7 @@ module.exports = async function pdf({
 
     await page.setRequestInterception(true);
 
-    page.on("request", (request) => {
+    page.on('request', (request) => {
       const url = request.url();
       const method = request.method();
       const resourceType = request.resourceType();
@@ -131,7 +131,7 @@ module.exports = async function pdf({
       responseReject = reject;
     });
 
-    page.on("response", (resp) => {
+    page.on('response', (resp) => {
       const headers = resp._headers;
       const renderTestUrl = new URL(renderUrl);
       if (
@@ -152,7 +152,7 @@ module.exports = async function pdf({
           `Possible infinite redirects detected: ${headers.location} ${resp._status}`
         );
       } else if (resp && resp._status !== undefined && resp._status !== 200) {
-        responseReject(new Error("Status not 200."));
+        responseReject(new Error('Status not 200.'));
       }
     });
 
@@ -164,7 +164,7 @@ module.exports = async function pdf({
     await Promise.race([
       responsePromise,
       page.goto(renderUrl, {
-        waitUntil: "networkidle2",
+        waitUntil: 'networkidle2',
         timeout: PAGE_TIMEOUT,
       }),
     ]);
@@ -172,17 +172,17 @@ module.exports = async function pdf({
     // Pause all media and stop buffering
     page.frames().forEach((frame) => {
       frame.evaluate(() => {
-        document.querySelectorAll("video, audio").forEach((m) => {
+        document.querySelectorAll('video, audio').forEach((m) => {
           if (!m) return;
           if (m.pause) m.pause();
-          m.preload = "none";
+          m.preload = 'none';
         });
       });
     });
 
     // wait to render pdf
     const pdf = await Promise.race([
-      timeoutAndReject(PDF_TIMEOUT, "PDF timed out"),
+      timeoutAndReject(PDF_TIMEOUT, 'PDF timed out'),
       page.pdf(pdfOptions),
     ]);
 
@@ -200,11 +200,11 @@ module.exports = async function pdf({
       await page.removeAllListeners();
       await page.close();
     }
-    const { message = "" } = e;
+    const { message = '' } = e;
 
     // Handle websocket not opened error
     if (/not opened/i.test(message) && browser) {
-      console.error("🕸 Web socket failed");
+      console.error('🕸 Web socket failed');
       try {
         await browser.close();
         browser = null;

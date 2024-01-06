@@ -3,6 +3,7 @@ module.exports = {
     browser: true,
     commonjs: true,
     es2021: true,
+    'jest/globals': true,
   },
   extends: ['standard', 'plugin:prettier/recommended'],
 
@@ -23,5 +24,5 @@ module.exports = {
   rules: {
     'prettier/prettier': 'error',
   },
-  plugins: ['prettier'],
+  plugins: ['prettier', 'jest'],
 };

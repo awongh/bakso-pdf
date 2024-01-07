@@ -5,7 +5,6 @@ const PDF_TIMEOUT = process.env.PDF_TIMEOUT || 1000000;
 const PAGE_TIMEOUT = process.env.PAGE_TIMEOUT || 1000000;
 
 const puppeteer = require('puppeteer');
-const axios = require('axios').default;
 
 const truncate = (str, len) =>
   str.length > len ? str.slice(0, len) + '…' : str;

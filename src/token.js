@@ -10,10 +10,7 @@ function generateToken(secretKey){
 
 const secretKey = process.argv[2] || null;
 
-if (secretKey === null) {
-  console.error('Secret key environment variable not set.');
-} else {
-
+if (secretKey !== null) {
   const token = generateToken(secretKey);
   console.log(token);
 }

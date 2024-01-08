@@ -10,6 +10,7 @@ require('express-async-errors');
 const serverRoutes = require('../src/router');
 const generateToken = require('../src/token');
 const request = require('supertest');
+// const fs = require('fs/promises');
 
 // comment from 2019
 // https://github.com/mozilla/pdf.js/issues/10317#issuecomment-523430529
@@ -39,8 +40,7 @@ describe('testing-healthcheck', () => {
 });
 
 describe('testing-pdf-generation', () => {
-
-it('POST /download/pdf - success min params', async () => {
+  it('POST /download/pdf - success min params', async () => {
     const pdfInputObj = {
       pdfParams: {
         renderUrl: 'https://example.com',
@@ -52,11 +52,12 @@ it('POST /download/pdf - success min params', async () => {
     const result = await request(app)
       .post('/download/pdf')
       .send(pdfInputObj)
-      // .set('Authorization', 'Bearer ' + token)
       .set('Authorization', token)
       .set('Accept', 'application/json');
 
     expect(result.status).toEqual(200);
+    // manually verify pdf document
+    // await fs.writeFile('example.pdf', result.body, 'utf-8');
 
     const uint8Array = new Uint8Array(result.body);
     // Load the PDF document using PDFJS.getDocument
@@ -91,10 +92,11 @@ it('POST /download/pdf - success min params', async () => {
     const result = await request(app)
       .post('/download/pdf')
       .send(pdfInputObj)
-      // .set('Authorization', 'Bearer ' + token)
       .set('Authorization', token)
       .set('Accept', 'application/json');
 
+    // manually verify pdf document
+    // await fs.writeFile('example.pdf', result.body, 'utf-8');
     const uint8Array = new Uint8Array(result.body);
     // Load the PDF document using PDFJS.getDocument
     try {

@@ -5,7 +5,7 @@ const { baksoParamsSchema } = require('./schemas');
 const authenticateToken = require('./auth');
 
 const Ajv = require('ajv');
-const ajv = new Ajv();
+const ajv = new Ajv({ strictTypes: false });
 
 const router = new Router();
 

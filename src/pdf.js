@@ -6,14 +6,17 @@ const truncate = (str, len) =>
   str.length > len ? str.slice(0, len) + '…' : str;
 
 const puppeteerConfig = {
-  headless: true,
+  // https://developer.chrome.com/articles/new-headless/
+  headless: 'new',
+  // headless: true,
   ignoreHTTPSErrors: true,
   args: [
     '--no-sandbox',
     '--disable-setuid-sandbox',
     '--enable-features=NetworkService',
     '-—disable-dev-tools',
-    '--headless',
+    // '--headless',
+    '--headless=new',
     '--disable-gpu',
     '--full-memory-crash-report',
     '--unlimited-storage',
@@ -29,6 +32,8 @@ const puppeteerConfig = {
   ],
   devtools: false,
 };
+
+module.exports.puppeteerConfig = puppeteerConfig;
 
 function testUrl(url) {
   if (!/^https?:\/\//i.test(url)) {
@@ -95,6 +100,7 @@ async function pdf({
   windowViewportHeight,
   pdfGenerationTimeout,
   pageRequestTimeout,
+  isTest,
 }) {
   try {
     // set default values if its not set
@@ -104,6 +110,7 @@ async function pdf({
     windowViewportHeight ||= 50;
     pdfGenerationTimeout ||= 1000000;
     pageRequestTimeout ||= 1000000;
+    isTest ||= false;
 
     console.log(renderUrl);
     testUrl(renderUrl);
@@ -122,7 +129,12 @@ async function pdf({
       const resourceType = request.resourceType();
 
       // Skip data URIs
-      if (/^data:/i.test(url)) {
+      if (/^data:/i.test(url) && isTest === false) {
+        request.continue();
+        return;
+      }
+
+      if (/\/favicon\.ico$/i.test(url) && isTest === false) {
         request.continue();
         return;
       }
@@ -132,13 +144,16 @@ async function pdf({
       const otherResources = /^(manifest|other)$/i.test(resourceType);
       // Abort requests that exceeds the timeout
       // Also abort if more than 100 requests
-      if (seconds > pageRequestTimeout || reqCount > 100 || actionDone) {
+      if (
+        isTest === false &&
+        (seconds > pageRequestTimeout || reqCount > 100 || actionDone)
+      ) {
         console.log(`❌⏳ ${method} ${shortURL}`);
         request.abort();
-      } else if (otherResources) {
+      } else if (isTest === false && otherResources) {
         console.log(`❌ ${method} ${shortURL}`);
         request.abort();
-      } else {
+      } else if (isTest === false) {
         console.log(`✅ ${method} ${shortURL}`);
         request.continue();
         reqCount++;
@@ -151,26 +166,37 @@ async function pdf({
     });
 
     page.on('response', (resp) => {
-      const headers = resp._headers;
+      const headers = resp.headers();
+      const status = resp.status();
       const renderTestUrl = new URL(renderUrl);
+      const responseUrl = new URL(resp.url());
+
+      if (/\/favicon\.ico$/i.test(responseUrl)) {
+        return;
+      }
+
       if (
         resp &&
-        resp._status !== undefined &&
-        (resp._status === 201 ||
-          resp._status === 301 ||
-          resp._status === 302 ||
-          resp._status === 303 ||
-          resp._status === 307 ||
-          resp._status === 308) &&
+        status !== undefined &&
+        (status === 201 ||
+          status === 301 ||
+          status === 302 ||
+          status === 303 ||
+          status === 307 ||
+          status === 308) &&
         headers &&
-        headers.location !== undefined &&
-        headers.location.includes(renderTestUrl.hostname)
+        headers.url() !== undefined &&
+        responseUrl.hostname === renderTestUrl.hostname
       ) {
-        // responseReject(new Error(`Possible infinite redirects detected: ${headers['location']} ${resp._status}`));
-        console.log(
-          `Possible infinite redirects detected: ${headers.location} ${resp._status}`
+        responseReject(
+          new Error(
+            `Possible infinite redirects detected: ${responseUrl} ${resp.status()}`
+          )
         );
-      } else if (resp && resp._status !== undefined && resp._status !== 200) {
+        console.log(
+          `Possible infinite redirects detected: ${responseUrl} ${status}`
+        );
+      } else if (resp && status !== undefined && status !== 200) {
         responseReject(new Error('Status not 200.'));
       }
     });
@@ -241,7 +267,6 @@ async function pdf({
     // give up and throw up to retry
     throw e;
   }
-};
+}
 
-
-module.exports.pdf =  pdf;
+module.exports.pdf = pdf;

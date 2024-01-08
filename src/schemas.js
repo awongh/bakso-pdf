@@ -100,21 +100,17 @@ const baksoParamsSchema = {
   properties: {
     name: { type: 'string' },
     renderUrl: { type: 'string' },
-    pageOptions: {
-      type: 'object',
-      properties: {
-        width: { type: 'integer' },
-        height: { type: 'integer' },
-      },
-    },
+    windowViewportWidth: { type: 'integer' },
+    windowViewportHeight: { type: 'integer' },
+    pdfGenerationTimeout: { type: 'integer'},
+    pageRequestTimeout: { type: 'integer'},
     pdfOptions: { $ref: '#/definitions/pdfOptions' },
   },
-  // required: ['foo'],
   additionalProperties: false,
   definitions: {
     pdfOptions: pdfOptionsSchema,
   },
-  required: ['name', 'renderUrl'],
+  required: ['renderUrl'],
 };
 
 module.exports.baksoParamsSchema = baksoParamsSchema;

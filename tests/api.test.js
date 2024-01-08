@@ -2,6 +2,7 @@ require('dotenv').config();
 const testPrivateKey =
   'rSM7yFSOHCz8btXXWOfW3WFA0k5Uk0X6iqPQ/eNBJlnm2cYOHwdhPgA4q3WTpjTF+UIpTpi+rlRxIy67w/+h4yA0jz8q0B7Da94EdXPZJPkWgV7rumclzdDXURr4X3Hutbg8l1jrjEvh5kPNqXrXnYaYr1vaF9GYN20UiDLVgOcYJuW3B6QMxxN2EQNKrizVT97jrLIYOWuXSpTY4H3y8aQxG7orTyCmTvMXOANdQRjgp2ZInpztR/oWIhZ4VPmDcvx+bA88YoOLSL2b8CO2ezG9jCFmLeDbJpnMvzgTfkPrOvHESX62s1o5sjBXjQMH+d2VdzHsaasKTu7qeGvPxg==';
 
+// set this for verifying the key upon request
 process.env.BAKSO_SECRET_KEY = testPrivateKey;
 
 const express = require('express');
@@ -13,21 +14,23 @@ const request = require('supertest');
 // comment from 2019
 // https://github.com/mozilla/pdf.js/issues/10317#issuecomment-523430529
 // the last version of pdfjs formatted for commonjs
-// this package.json installs v2.11 for commonjs compatibility
+// package.json installs v2.11 for commonjs compatibility
 const PDFJS = require('pdfjs-dist');
 
 const app = express();
 app.use(express.json());
 app.use(serverRoutes);
 
-/* ========================================
+/*
+ * ========================================
  * ========================================
  *
- * start tests
+ * tests
  *
  * ========================================
  * ========================================
  */
+
 describe('testing-healthcheck', () => {
   it('GET /healthcheck - success', async () => {
     const { text } = await request(app).get('/healthcheck');
@@ -36,16 +39,45 @@ describe('testing-healthcheck', () => {
 });
 
 describe('testing-pdf-generation', () => {
-  it('POST /download/pdf - success', async () => {
+
+it('POST /download/pdf - success min params', async () => {
     const pdfInputObj = {
-      key: 'blah',
       pdfParams: {
-        name: 'myfile',
         renderUrl: 'https://example.com',
-        pageOptions: {
-          width: 50,
-          height: 50,
-        },
+      },
+    };
+
+    const token = generateToken(testPrivateKey);
+
+    const result = await request(app)
+      .post('/download/pdf')
+      .send(pdfInputObj)
+      // .set('Authorization', 'Bearer ' + token)
+      .set('Authorization', token)
+      .set('Accept', 'application/json');
+
+    expect(result.status).toEqual(200);
+
+    const uint8Array = new Uint8Array(result.body);
+    // Load the PDF document using PDFJS.getDocument
+    try {
+      const pdfDoc = await PDFJS.getDocument(uint8Array).promise;
+      expect(pdfDoc._pdfInfo.numPages).toEqual(1);
+    } catch (e) {
+      console.error('Error loading PDF:', e);
+      throw e;
+    }
+  });
+
+  it('POST /download/pdf - success full params', async () => {
+    const pdfInputObj = {
+      pdfParams: {
+        renderUrl: 'https://example.com',
+        name: 'myfile',
+        windowViewportWidth: 50,
+        windowViewportHeight: 50,
+        pageRequestTimeout: 1000000,
+        pdfGenerationTimeout: 1000000,
         pdfOptions: {
           width: '8.5in',
           height: '11in',
@@ -54,7 +86,7 @@ describe('testing-pdf-generation', () => {
       },
     };
 
-    const token = generateToken(process.env.BAKSO_SECRET_KEY);
+    const token = generateToken(testPrivateKey);
 
     const result = await request(app)
       .post('/download/pdf')

@@ -1,8 +1,4 @@
-const { DEBUG, HEADFUL, CHROME_BIN, PORT } = process.env;
-
-// set the default to heroku max ?
-const PDF_TIMEOUT = process.env.PDF_TIMEOUT || 1000000;
-const PAGE_TIMEOUT = process.env.PAGE_TIMEOUT || 1000000;
+const { DEBUG, HEADFUL, CHROME_BIN } = process.env;
 
 const puppeteer = require('puppeteer');
 
@@ -49,7 +45,6 @@ function timeoutAndReject(timeout, message) {
 }
 
 async function checkPageHTML(url) {
-
   const res = await fetch(url, {
     method: 'HEAD', // Change the method to 'HEAD'
   });
@@ -65,20 +60,10 @@ async function checkPageHTML(url) {
   return res;
 }
 
-module.exports = async function pdf({
-  renderUrl,
-  pageOptions,
-  pdfOptions,
-  name,
-}) {
+module.exports.puppeteerPdf = async function puppeteerPdf(pdfParams) {
   let browser, page;
 
   try {
-    console.log(renderUrl);
-    testUrl(renderUrl);
-
-    await checkPageHTML(renderUrl);
-
     if (DEBUG) puppeteerConfig.dumpio = true;
 
     if (HEADFUL) {
@@ -90,6 +75,40 @@ module.exports = async function pdf({
 
     browser = await puppeteer.launch(puppeteerConfig);
     page = await browser.newPage();
+
+    return pdf({ browser, page, ...pdfParams });
+  } catch (e) {
+    console.error(e);
+
+    // give up and throw up to retry
+    throw e;
+  }
+};
+
+async function pdf({
+  browser,
+  page,
+  name,
+  renderUrl,
+  pdfOptions,
+  windowViewportWidth,
+  windowViewportHeight,
+  pdfGenerationTimeout,
+  pageRequestTimeout,
+}) {
+  try {
+    // set default values if its not set
+    name ||= 'document';
+    pdfOptions ||= {};
+    windowViewportWidth ||= 50;
+    windowViewportHeight ||= 50;
+    pdfGenerationTimeout ||= 1000000;
+    pageRequestTimeout ||= 1000000;
+
+    console.log(renderUrl);
+    testUrl(renderUrl);
+
+    await checkPageHTML(renderUrl);
 
     let actionDone = false;
     let reqCount = 0;
@@ -111,9 +130,9 @@ module.exports = async function pdf({
       const seconds = (+new Date() - nowTime) / 1000;
       const shortURL = truncate(url, 70);
       const otherResources = /^(manifest|other)$/i.test(resourceType);
-      // Abort requests that exceeds 15 seconds
+      // Abort requests that exceeds the timeout
       // Also abort if more than 100 requests
-      if (seconds > 15 || reqCount > 100 || actionDone) {
+      if (seconds > pageRequestTimeout || reqCount > 100 || actionDone) {
         console.log(`❌⏳ ${method} ${shortURL}`);
         request.abort();
       } else if (otherResources) {
@@ -157,15 +176,15 @@ module.exports = async function pdf({
     });
 
     await page.setViewport({
-      width: pageOptions.width,
-      height: pageOptions.height,
+      width: windowViewportWidth,
+      height: windowViewportHeight,
     });
 
     await Promise.race([
       responsePromise,
       page.goto(renderUrl, {
         waitUntil: 'networkidle2',
-        timeout: PAGE_TIMEOUT,
+        timeout: pageRequestTimeout,
       }),
     ]);
 
@@ -182,7 +201,7 @@ module.exports = async function pdf({
 
     // wait to render pdf
     const pdf = await Promise.race([
-      timeoutAndReject(PDF_TIMEOUT, 'PDF timed out'),
+      timeoutAndReject(pdfGenerationTimeout, 'PDF timed out'),
       page.pdf(pdfOptions),
     ]);
 
@@ -223,3 +242,6 @@ module.exports = async function pdf({
     throw e;
   }
 };
+
+
+module.exports.pdf =  pdf;

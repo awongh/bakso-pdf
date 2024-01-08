@@ -8,7 +8,7 @@ function generateToken(secretKey){
   return jwt.sign({}, secretKey, options);
 }
 
-const secretKey = process.env.BAKSO_SECRET_KEY || null;
+const secretKey = process.argv[2] || null;
 
 if (secretKey === null) {
   console.error('Secret key environment variable not set.');

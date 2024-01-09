@@ -8,14 +8,12 @@ const truncate = (str, len) =>
 const puppeteerConfig = {
   // https://developer.chrome.com/articles/new-headless/
   headless: 'new',
-  // headless: true,
   ignoreHTTPSErrors: true,
   args: [
     '--no-sandbox',
     '--disable-setuid-sandbox',
     '--enable-features=NetworkService',
     '-—disable-dev-tools',
-    // '--headless',
     '--headless=new',
     '--disable-gpu',
     '--full-memory-crash-report',
@@ -50,9 +48,16 @@ function timeoutAndReject(timeout, message) {
 }
 
 async function checkPageHTML(url) {
-  const res = await fetch(url, {
-    method: 'HEAD', // Change the method to 'HEAD'
-  });
+  const parsedUrl = new URL(url);
+
+  // for nodejs < 20 fetch to localhost doesn't work
+  // if it's local, don't check this
+  // https://github.com/node-fetch/node-fetch/issues/1624
+  if (parsedUrl.hostname === 'localhost') {
+    return true;
+  }
+
+  const res = await fetch(url, {method: 'HEAD'});
 
   if (
     !res.ok ||
@@ -112,7 +117,6 @@ async function pdf({
     pageRequestTimeout ||= 1000000;
     isTest ||= false;
 
-    console.log(renderUrl);
     testUrl(renderUrl);
 
     await checkPageHTML(renderUrl);

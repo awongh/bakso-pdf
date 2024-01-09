@@ -12,8 +12,7 @@ const fs = require('fs/promises');
 const PDFJS = require('pdfjs-dist');
 
 describe('pdf gen tests', () => {
-  it('GET /healthcheck - success', async () => {
-
+  it('creates a pdf file', async () => {
     const browser = await puppeteer.launch(puppeteerConfig);
     const page = await browser.newPage();
     useNock(page, ['https://example.com']);
@@ -21,7 +20,7 @@ describe('pdf gen tests', () => {
     const inputParams = {
       browser,
       page,
-      isTest:true,
+      isTest: true,
       renderUrl: 'https://example.com',
     };
 
@@ -30,16 +29,12 @@ describe('pdf gen tests', () => {
       'utf-8'
     );
 
-    // await nock('https://example.com').get('/favicon.ico').reply(200, '');
     await nock('https://example.com').get('/').reply(200, exampleHtml);
 
     const pdfResult = await pdf(inputParams);
-    console.log('done');
-    await fs.writeFile('try99.pdf', pdfResult, 'utf-8');
+    // await fs.writeFile('example.pdf', pdfResult, 'utf-8');
 
     const uint8Array = new Uint8Array(pdfResult);
-    // const uint8Array = await new Uint8Array(pdfResult);
-    // Load the PDF document using PDFJS.getDocument
     try {
       const pdfDoc = await PDFJS.getDocument(uint8Array).promise;
       expect(pdfDoc._pdfInfo.numPages).toEqual(1);

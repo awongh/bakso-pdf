@@ -5,8 +5,6 @@
 
 ### `bakso-doc` is a Node.js micro-service that creates PDF documents.
 
-<br/>
-
 It uses [Puppeteer](https://www.npmjs.com/package/puppeteer) and headless Chrome to request an HTML document and create a PDF.
 
 ### Features:
@@ -16,18 +14,12 @@ It uses [Puppeteer](https://www.npmjs.com/package/puppeteer) and headless Chrome
 
 <br/>
 
-## Print Stylesheet: Use HTML & CSS to Create Documents 
+## Menu
 
-CSS provides a powerful set of media queries and styles to be able to style a document.
-```CSS
-@page {
-  size: A4 landscape;
-}
-```
-
-https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_media_queries/Printing
-
-https://www.smashingmagazine.com/2011/11/how-to-set-up-a-print-style-sheet/
+- [Architecture](#architecture)
+- [CSS Styles for PDFs](#print-stylesheet-use-html--css-to-create-documents)
+- [Get Started](#get-started)
+- [Delpoyment](#deployment)
 
 <br/>
 
@@ -56,6 +48,21 @@ Because Puppeteer/Chrome makes the requests diectly by setting the page URL, onl
 `bakso-doc` authorizes requests with [JWT tokens](https://www.npmjs.com/package/jsonwebtoken). The default is to generate a [long-lived token](https://github.com/awongh/bakso-doc/blob/main/src/token.js#L6) for use on the requesting server.
 
 Optionally, the secret can be shared across services and used to both sign and verify the tokens.
+
+<br/>
+
+## Print Stylesheet: Use HTML & CSS to Create Documents 
+
+CSS provides a powerful set of media queries and styles to be able to style a document.
+```CSS
+@page {
+  size: A4 landscape;
+}
+```
+
+https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_media_queries/Printing
+
+https://www.smashingmagazine.com/2011/11/how-to-set-up-a-print-style-sheet/
 
 <br/>
 

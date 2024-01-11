@@ -3,11 +3,9 @@
 ![test workflow](https://github.com/awongh/bakso-doc/actions/workflows/node.js.yml/badge.svg) ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/awongh/bakso-doc/node.js.yml) ![GitHub issues](https://img.shields.io/github/issues/awongh/bakso-doc) ![GitHub License](https://img.shields.io/github/license/awongh/bakso-doc)
 
 
-
 ### `bakso-doc` is a Node.js micro-service that creates PDF documents.
 
 <br/>
-
 
 It uses [Puppeteer](https://www.npmjs.com/package/puppeteer) and headless Chrome to request an HTML document and create a PDF.
 
@@ -37,13 +35,25 @@ https://www.smashingmagazine.com/2011/11/how-to-set-up-a-print-style-sheet/
 
 ![bakso-doc architecture](docs/bakso-arch.jpg)
 
+1. Originating app server requests a PDF document.
+   1. The request contains the URL of an HTML page.
+2. `bakso-doc` uses Puppeteer to request the HTML page.
+3. [`Page.pdf`](https://pptr.dev/api/puppeteer.page.pdf/) method is called to generate a PDF document from the HTML page.
+4. The entire PDF document is sent back in the response to the originating server.
+
+<br/>
+
+### Synchronous Requests
 `bakso-doc` runs synchronously. When a document is requested, the request does not finish until the entire document is sent back. It is meant to be used in a queue system where the length of time to complete a request is not important.
 
 `bakso-doc` is agnostic to other parts of the document processing system.
 
+### Page Request
+Because Puppeteer/Chrome makes the requests diectly by setting the page URL, only GET requests can be made to the document page. You must pass any parameters in the URL query string.
+
 ### Auth
 
-`bakso-doc` authorizes requests with JWT tokens. The default is to generate a long-lived token for use on the requesting server.
+`bakso-doc` authorizes requests with [JWT tokens](https://www.npmjs.com/package/jsonwebtoken). The default is to generate a [long-lived token](https://github.com/awongh/bakso-doc/blob/main/src/token.js#L6) for use on the requesting server.
 
 Optionally, the secret can be shared across services and used to both sign and verify the tokens.
 
@@ -83,7 +93,12 @@ $ TEMP_TOKEN=$(npm run generate_key <SECRET GOES HERE> | tail -n 1)) &&
 curl -X POST -H "Authorization: ${TEMP_TOKEN}" -H "Content-Type: application/json" --output test.pdf -d '{"pdfParams":{"renderUrl":"https://example.com"}}' http://localhost:5003/download/pdf
 ```
 
-## PDF Options
+<br/>
+
+### Params
+See the [schemas.js](https://github.com/awongh/bakso-doc/blob/main/src/schemas.js) file to see the full accepted request params.
+
+#### PDF Options
 See the PDF options as [defined by Pupeteer.](https://pptr.dev/api/puppeteer.pdfoptions)
 
 Example:

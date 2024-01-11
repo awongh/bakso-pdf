@@ -1,24 +1,37 @@
 # bakso-doc
 
-`bakso-doc` is a Node.js micro-service that creates PDF documents.
+![test workflow](https://github.com/awongh/bakso-doc/actions/workflows/node.js.yml/badge.svg) ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/awongh/bakso-doc/node.js.yml) ![GitHub issues](https://img.shields.io/github/issues/awongh/bakso-doc) ![GitHub License](https://img.shields.io/github/license/awongh/bakso-doc)
+
+
+
+### `bakso-doc` is a Node.js micro-service that creates PDF documents.
+
+<br/>
+
 
 It uses [Puppeteer](https://www.npmjs.com/package/puppeteer) and headless Chrome to request an HTML document and create a PDF.
 
+### Features:
 - Simpler that propietary PDF-building syntaxes. Just use HTML & CSS.
 - Simple stateless architecture
 - Easy to setup
 
+<br/>
+
 ## Print Stylesheet: Use HTML & CSS to Create Documents 
 
 CSS provides a powerful set of media queries and styles to be able to style a document.
-```
+```CSS
 @page {
   size: A4 landscape;
 }
 ```
 
 https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_media_queries/Printing
+
 https://www.smashingmagazine.com/2011/11/how-to-set-up-a-print-style-sheet/
+
+<br/>
 
 ## Architecture
 
@@ -33,6 +46,8 @@ https://www.smashingmagazine.com/2011/11/how-to-set-up-a-print-style-sheet/
 `bakso-doc` authorizes requests with JWT tokens. The default is to generate a long-lived token for use on the requesting server.
 
 Optionally, the secret can be shared across services and used to both sign and verify the tokens.
+
+<br/>
 
 ## Get Started
 
@@ -57,12 +72,15 @@ Generate a requesting token:
 $ npm run generate_token <SECRET GOES HERE>
 ```
 
-Set the requesting token in the request.
+## Generate a simple PDF Document
 
-Create a test file called `test.pdf` in the current directory.
-```
+Set the requesting token in the `Authorization` request header.
+
+Use cURL to make the request and download the file- create a test file called `test.pdf` in the current directory.
+
+```bash
 $ TEMP_TOKEN=$(npm run generate_key <SECRET GOES HERE> | tail -n 1)) &&
-curl -X POST -H "Content-Type: application/json" --output test.pdf  -H "Authorization: ${TEMP_TOKEN}" -d '{"pdfParams":{"renderUrl":"https://example.com"}}' http://localhost:5003/download/pdf
+curl -X POST -H "Authorization: ${TEMP_TOKEN}" -H "Content-Type: application/json" --output test.pdf -d '{"pdfParams":{"renderUrl":"https://example.com"}}' http://localhost:5003/download/pdf
 ```
 
 ## PDF Options
@@ -80,3 +98,9 @@ Example:
   }
 }
 ```
+
+<br/>
+
+## Deployment
+
+For deployment on [render.com](https://www.render.com) see the [render.com branch.](https://github.com/awongh/bakso-doc/tree/render.com)

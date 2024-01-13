@@ -146,7 +146,6 @@ BAKSO_SENTRY_DSN='<YOUR SENTRY DSN>'
 Checkout the examples directory.
 
 #### Birthday Card Document Server
-Express server that creates a customized 8½x11 birthday card.
 
 [Express server](./examples/card-example/README.md) that creates a customized 8½x11 birthday card.
 

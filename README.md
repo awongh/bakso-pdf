@@ -20,6 +20,8 @@ It uses [Puppeteer](https://www.npmjs.com/package/puppeteer) and headless Chrome
 - [CSS Styles for PDFs](#print-stylesheet-use-html--css-to-create-documents)
 - [Get Started](#get-started)
 - [Delpoyment](#deployment)
+- [Error Monitoring](#error-monitoring)
+- [Examples](#examples)
 
 <br/>
 
@@ -45,7 +47,7 @@ Because Puppeteer/Chrome makes the requests diectly by setting the page URL, onl
 
 ### Auth
 
-`bakso-doc` authorizes requests with [JWT tokens](https://www.npmjs.com/package/jsonwebtoken). The default is to generate a [long-lived token](https://github.com/awongh/bakso-doc/blob/main/src/token.js#L6) for use on the requesting server.
+In the interest of keeping server auth simple and easy to setup, `bakso-doc` authorizes requests with [JWT tokens](https://www.npmjs.com/package/jsonwebtoken). The default is to generate a [long-lived token](https://github.com/awongh/bakso-doc/blob/main/src/token.js#L6) for use on the requesting server.
 
 Optionally, the secret can be shared across services and used to both sign and verify the tokens.
 
@@ -69,23 +71,23 @@ https://www.smashingmagazine.com/2011/11/how-to-set-up-a-print-style-sheet/
 ## Get Started
 
 Clone the repo:
-```
+```bash
 $ git clone https://github.com/awongh/bakso-doc.git && cd bakso-doc
 ```
 
 Install deps:
-```
+```bash
 npm i
 ```
 
 Generate the secret and set it in the `.env` file:
-```
+```bash
 $ touch .env &&
 echo "BAKSO_SECRET_KEY=\"$( node -e "console.log(require('crypto').randomBytes(256).toString('base64'));" )\"" >> .env
 ```
 
 Generate a requesting token:
-```
+```bash
 $ npm run generate_token <SECRET GOES HERE>
 ```
 
@@ -96,10 +98,9 @@ Set the requesting token in the `Authorization` request header.
 Use cURL to make the request and download the file- create a test file called `test.pdf` in the current directory.
 
 ```bash
-$ TEMP_TOKEN=$(npm run generate_key <SECRET GOES HERE> | tail -n 1)) &&
+$ TEMP_TOKEN=$(npm run generate_token "<YOUR SECRET HERE>" | tail -n 1) &&
 curl -X POST -H "Authorization: ${TEMP_TOKEN}" -H "Content-Type: application/json" --output test.pdf -d '{"pdfParams":{"renderUrl":"https://example.com"}}' http://localhost:5003/download/pdf
 ```
-
 <br/>
 
 ### Params
@@ -109,7 +110,7 @@ See the [schemas.js](https://github.com/awongh/bakso-doc/blob/main/src/schemas.j
 See the PDF options as [defined by Pupeteer.](https://pptr.dev/api/puppeteer.pdfoptions)
 
 Example:
-```
+```JSON
 {
   "name":"myfile",
   "renderUrl":"https://localhost:3000/mydoc",
@@ -125,4 +126,27 @@ Example:
 
 ## Deployment
 
+#### render.com
+
 For deployment on [render.com](https://www.render.com) see the [render.com branch.](https://github.com/awongh/bakso-doc/tree/render.com)
+
+<br/>
+
+## Error Monitoring
+
+Error monitoring with [Sentry](https://sentry.io) is already setup.
+
+Add your Sentry DSN to the `.env` file:
+```bash
+BAKSO_SENTRY_DSN='<YOUR SENTRY DSN>'
+```
+
+## Examples
+
+Checkout the examples directory.
+
+#### Birthday Card Document Server
+Express server that creates a customized 8½x11 birthday card.
+
+[Express server](./examples/card-example/README.md) that creates a customized 8½x11 birthday card.
+

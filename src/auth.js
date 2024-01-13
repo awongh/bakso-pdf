@@ -5,7 +5,7 @@ module.exports = function authenticateToken(req, res, next) {
 
   // if secret key isn't set, default open
   if (secretKey === null) {
-    next();
+    throw new Error('Secret key not set. Set BAKSO_SECRET_KEY env var.');
   }
 
   const token = req.headers.authorization;
